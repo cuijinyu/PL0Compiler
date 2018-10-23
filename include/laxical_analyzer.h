@@ -1,10 +1,31 @@
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include <sstream>
+#include "token.h"
 #ifndef LAXICAL_ANALYZER_H
 #define LAXICAL_ANALYZER_H
 #define MAX_TOKENSIZE 40;
 using namespace std;
+
+// DFA中的各种状态
+enum STATE {
+    START,
+    DONE,
+    ERROR,
+    PLNUM,
+    PLIDEN,
+    PLUS,
+    SUB,
+    MUL,
+    DIV,
+    EQ,
+    LEQ,
+    GEQ,
+    NEQ,
+    ASSIGN
+};
+
 class Laxer
 {
     public:
@@ -12,6 +33,8 @@ class Laxer
 
         Laxer (string file_path) {
           this -> file_path = file_path;
+          line_number = 0;
+          char_pos = 0;
           open_source_file();
         };
 
@@ -49,7 +72,9 @@ class Laxer
         ifstream infile;
 
         // state 用来保存DFA目前的状态
-        string state;
+        STATE state;
+
+        vector <Token> tokens;
 
         void increase_line_number () {
             this -> line_number ++;

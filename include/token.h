@@ -5,9 +5,9 @@
 
 class Token {
     public:
-        Token ();
+        Token () {};
         Token (int line, Tag tag):line(line),tag(tag){};
-        ~ Token ();
+        ~ Token () {};
         int getLine ();
         Tag getTag ();
     private:
