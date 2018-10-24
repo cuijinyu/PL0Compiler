@@ -15,6 +15,7 @@ enum STATE {
     ERROR,
     PLNUM,
     PLIDEN,
+    PLOPERATOR,
     PLUS,
     SUB,
     MUL,
@@ -52,6 +53,9 @@ class Laxer
 
         // 用来获取下一个字符
         char get_next_char ();
+
+        // 放回一个字符
+        void un_get_char ();
 
         // 词法分析器主程序
         void tokenizer ();
