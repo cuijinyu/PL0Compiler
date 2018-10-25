@@ -16,15 +16,12 @@ enum STATE {
     PLNUM,
     PLIDEN,
     PLOPERATOR,
-    PLUS,
-    SUB,
-    MUL,
-    DIV,
     EQ,
     LEQ,
     GEQ,
     NEQ,
-    ASSIGN
+    ASSIGN,
+    DOT
 };
 
 class Laxer
@@ -35,7 +32,7 @@ class Laxer
         Laxer (string file_path) {
           this -> file_path = file_path;
           line_number = 0;
-          char_pos = 0;
+          char_pos = -1;
           open_source_file();
         };
 
@@ -51,15 +48,19 @@ class Laxer
             cout << this -> line_number << endl;
         };
 
+        // 词法分析器主程序
+        void tokenizer ();
+
+    private:
         // 用来获取下一个字符
         char get_next_char ();
 
         // 放回一个字符
         void un_get_char ();
 
-        // 词法分析器主程序
-        void tokenizer ();
-    private:
+        // 增加行数
+        void increase_line();
+
         //  progran_string 用来存储程序源代码
         string program_string;
 
@@ -91,7 +92,6 @@ class Laxer
             program_string = buf.str();
             if (infile) {
                 cout << "文件" << file_path << "打开成功" << endl;
-                cout << "文件的源代码为:" << program_string << endl;
             } else {
                 cout << "文件" << file_path << "打开失败" << "，请检查文件是否存在" << endl;
             }
