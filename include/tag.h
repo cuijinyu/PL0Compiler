@@ -6,6 +6,8 @@ enum Tag{
     MULTSYM,    //  *
     DIVSYM,     //  /
     EQSYM,      //  =
+    LSYM,       //  <
+    GSYM,       //  >
     LEQSYM,     //  <=
     GEQSYM,     //  >=
     NUMSYM,     //  number 
@@ -22,9 +24,12 @@ enum Tag{
     CONSTSYM,   //  const
     VARSYM,     //  var
     PROCSYM,    //  procedure
+    COMMASYM,   //  ,
     DOTSYM,     //  .
     SEMSYM,     //  ;
     ASSIGNSYM,  //  :=
     NEQSYM,     //  <>(!=)
+    LEFTBRACKET,    // (
+    RIGHTBRACKET    // )
 };
 #endif

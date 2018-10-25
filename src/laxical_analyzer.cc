@@ -19,7 +19,7 @@ char Laxer::get_next_char () {
 }
 
 void Laxer::un_get_char () {
-    if (this -> char_pos == 1) {
+    if (this -> char_pos == 0) {
         return;
     } else {
         this -> char_pos = this -> char_pos - 1;
@@ -41,6 +41,7 @@ void Laxer::increase_line () {
 void Laxer::tokenizer () {
 
     // 在开始时，置state为START
+    char_pos = -1;
     state = START;
     string lexem = "";
     while (true) {
@@ -54,14 +55,25 @@ void Laxer::tokenizer () {
             case START:
                 switch ( ch ) {
                     case '+':
+                        tokens.push_back(new Token(line_number, lexem, PLUSSYM));
                     case '-':
+                        tokens.push_back(new Token(line_number, lexem, SUBSYM));
                     case '*':
+                        tokens.push_back(new Token(line_number, lexem, MULTSYM));
                     case '/':
+                        tokens.push_back(new Token(line_number, lexem, DIVSYM));
                     case ';':
+                        tokens.push_back(new Token(line_number, lexem, SEMSYM));
                     case ',':
+                        tokens.push_back(new Token(line_number, lexem, COMMASYM));
                     case '=':
+                        tokens.push_back(new Token(line_number, lexem, EQSYM));
                     case '(':
+                        tokens.push_back(new Token(line_number, lexem, LEFTBRACKET));
                     case ')':
+                        if (ch == ')') {
+                            tokens.push_back(new Token(line_number, lexem, RIGHTBRACKET));
+                        }
                         state = PLOPERATOR;
                         lexem = lexem + ch;
                         break;
@@ -92,6 +104,7 @@ void Laxer::tokenizer () {
                             lexem = lexem + ch;
                             state = DOT;
                             state = DONE;
+                            tokens.push_back(new Token(line_number, lexem, DOTSYM));
                             cout << lexem << " ------>DOT" << " ---->Line" << line_number << endl;
                         } else {
                             state = ERROR;
@@ -105,6 +118,7 @@ void Laxer::tokenizer () {
                             state = PLNUM;
                             lexem = lexem + ch;
                         } else {
+                            tokens.push_back(new Token(line_number, lexem, NUMSYM));
                             cout << lexem << " ------>PLNUM" << " ---->Line" << line_number << endl;
                             un_get_char();
                             state = DONE;
@@ -118,6 +132,7 @@ void Laxer::tokenizer () {
                             state = PLIDEN;
                             lexem = lexem + ch;
                         } else {
+                            tokens.push_back(new Token(line_number, lexem, IDESYM));
                             cout << lexem << " ------>PLIDEN" << " ---->Line" << line_number  << endl;
                             un_get_char();
                             state = DONE;
@@ -132,6 +147,7 @@ void Laxer::tokenizer () {
                 switch ( ch ) {
                     case '=':
                         lexem = lexem + ch;
+                        tokens.push_back(new Token(line_number, lexem, ASSIGNSYM));
                         cout << lexem << " ------>ASSIGN" << " ---->Line" << line_number << endl;
                         state = DONE;
                         break;
@@ -143,15 +159,18 @@ void Laxer::tokenizer () {
                 switch ( ch ) {
                     case '=':
                         lexem = lexem + ch;
+                        tokens.push_back(new Token(line_number, lexem, LEQSYM));
                         cout << lexem << " ------>LEQ" << " ---->Line" << line_number << endl;
                         state = DONE;
                         break;
                     case '>':
                         lexem = lexem + ch;
+                        tokens.push_back(new Token(line_number, lexem, NEQSYM));
                         cout << lexem << " ------>NEQ" << " ---->Line" << line_number << endl;
                         state = DONE;
                         break;
                     default:
+                        tokens.push_back(new Token(line_number, lexem, LSYM));    
                         cout << lexem << " ------>L" << " ---->Line" << line_number << endl;
                         un_get_char();
                         state = DONE;
@@ -161,10 +180,12 @@ void Laxer::tokenizer () {
                 switch ( ch ) {
                     case '=':
                         lexem = lexem + ch;
+                        tokens.push_back(new Token(line_number, lexem, GEQSYM));
                         cout << lexem <<" ------>GEQ" << " ---->Line" << line_number << endl;
                         state = DONE;
                         break;
                     default:
+                        tokens.push_back(new Token(line_number, lexem, GSYM));
                         cout << lexem << " ------>G" << " ---->Line" << line_number << endl;
                         un_get_char();
                         state = DONE;
@@ -181,5 +202,12 @@ void Laxer::tokenizer () {
         }
     }
 
+    cout << endl;
+    cout << "一次扫描完成，开始做详细的分类" << endl;
+    cout << endl;
+
     // 一次扫描完成，开始做详细的分类
+    for (auto i:tokens) {
+        cout << i -> get_lexem() <<i -> get_tag() << endl;
+    }
 }

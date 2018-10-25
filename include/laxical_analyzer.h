@@ -79,7 +79,7 @@ class Laxer
         // state 用来保存DFA目前的状态
         STATE state;
 
-        vector <Token> tokens;
+        vector <Token *> tokens;
 
         void increase_line_number () {
             this -> line_number ++;
