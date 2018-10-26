@@ -8,6 +8,11 @@
 #define MAX_TOKENSIZE 40;
 using namespace std;
 
+struct reserved_word {
+    string lexem;
+    Tag t;
+};
+
 // DFA中的各种状态
 enum STATE {
     START,
@@ -95,6 +100,21 @@ class Laxer
             } else {
                 cout << "文件" << file_path << "打开失败" << "，请检查文件是否存在" << endl;
             }
+        };
+
+        reserved_word  reserved_word_list [12]= {
+            "const", CONSTSYM,
+            "if", IFSYM,
+            "else", ELSESYM,
+            "then", THENSYM,
+            "while", WHILESYM,
+            "begin", BEGINSYM,
+            "end", ENDSYM,
+            "read", READSYM,
+            "write", WRITESYM,
+            "call", CALLSYM,
+            "var", VARSYM,
+            "procedure", PROCSYM
         };
 
 };
