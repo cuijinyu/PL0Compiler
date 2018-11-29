@@ -53,6 +53,9 @@ class Laxer
             cout << this -> line_number << endl;
         };
 
+        // 获得 tokens
+        vector <Token *> get_tokens ();
+
         // 词法分析器主程序
         void tokenizer ();
 
@@ -102,7 +105,7 @@ class Laxer
             }
         };
 
-        reserved_word  reserved_word_list [12]= {
+        reserved_word  reserved_word_list [14]= {
             "const", CONSTSYM,
             "if", IFSYM,
             "else", ELSESYM,
@@ -114,7 +117,9 @@ class Laxer
             "write", WRITESYM,
             "call", CALLSYM,
             "var", VARSYM,
-            "procedure", PROCSYM
+            "procedure", PROCSYM,
+            "do", DOSYM,
+            "odd", ODDSYM
         };
 
 };

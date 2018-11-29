@@ -37,6 +37,9 @@ void Laxer::increase_line () {
     this -> line_number = this -> line_number + 1;
 }
 
+vector <Token *> Laxer::get_tokens () {
+    return tokens;
+}
 
 void Laxer::tokenizer () {
 
