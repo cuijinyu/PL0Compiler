@@ -41,6 +41,7 @@ enum Tag{
     FACTOR,     //  因子
     EPS,        // 一不赛龙
     PSTART,     //  语法分析开始Seg
-    PEND        //  语法分析结束Seg
+    PEND,        //  语法分析结束Seg
+    PROEND      // 程序结束Seg
 };
 #endif
