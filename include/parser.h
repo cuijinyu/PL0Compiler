@@ -413,7 +413,7 @@ void Parser::parse() {
 Tag Parser::get_next_token () {
     if (!tokens.empty()) {
         Token * temp_token = tokens[0];
-        tokens.pop_back();
+        tokens.erase(tokens.begin());
         lookahead = temp_token -> get_tag();
         return temp_token -> get_tag();
     }
@@ -457,8 +457,7 @@ bool Parser::in_follow (Tag t, string pro) {
 void Parser::generate_table () {
     for (auto first:firsts) {
 
-    }
-    
+    }   
 
     for (auto follow:follows) {
 
@@ -475,7 +474,7 @@ void Parser::program () {
     if (match(DOTSYM, lookahead)) {
         return;
     } else {
-        cout << "syntax error ,Code:" << DOTSYM;
+        cout << "syntax error ,Should be .,Code:" << DOTSYM;
     }
 }
 
@@ -483,8 +482,26 @@ void Parser::block () {
     do {
         if (match(CONSTSYM, lookahead)) {
             const_declare();
+            get_next_token();
+            while (match(COMMASYM, lookahead)) {
+                const_declare();
+                get_next_token();
+            }
+            if (!match(SEMSYM, lookahead)) {
+                cout << "syntax error ,Should be ;,Code:" << SEMSYM;
+            }
+            get_next_token();
         } else if (match(VARSYM, lookahead)) {
             var_declare();
+            get_next_token();
+            while (match(COMMASYM, lookahead)) {
+                var_declare();
+                get_next_token();
+            }
+            get_next_token();
+            if (!match(SEMSYM, lookahead)) {
+                cout << "syntax error ,Should be ;,Code:" << SEMSYM;
+            }
         } else if (match(PROCSYM, lookahead)) {
             procedure_declare();
         } else {
@@ -518,15 +535,54 @@ void Parser::factor () {
 }
 
 void Parser::const_declare () {
+    get_next_token();
+    if (!match(IDESYM, lookahead)) {
+        cout << "syntax error ,Should be identity,Code:" << IDESYM;
+        exit(1);
+    }
 
+    get_next_token();
+    if (!match(EQSYM, lookahead)) {
+        cout << "syntax error ,Should be =,Code:" << EQSYM;
+        exit(1);
+    }
+
+    get_next_token();
+    if (!match(NUMSYM, lookahead)) {
+        cout << "syntax error ,Should be number,Code:" << NUMSYM;
+    }
 }
 
 void Parser::var_declare () {
-
+    get_next_token();
+    if (!match(IDESYM, lookahead)) {
+        cout << "syntax error ,Should be identity,Code:" << NUMSYM;
+    }
 }
 
 void Parser::procedure_declare () {
+    get_next_token();
+    if (!match(IDESYM, lookahead)) {
 
+    }
+
+    get_next_token();
+    if (!match(SEMSYM, lookahead)) {
+
+    }
+
+    get_next_token();
+    block();
+
+    get_next_token();
+    if (!match(SEMSYM, lookahead)) {
+
+    }
+
+    get_next_token();
+    while (match(PROCSYM, lookahead)) {
+        procedure_declare();
+    }
 }
 
 void Parser::assign_statement () {
