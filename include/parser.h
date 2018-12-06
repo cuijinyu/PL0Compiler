@@ -68,6 +68,48 @@ class Parser {
         // 初始化follow集合
         void init_follow ();
 
+        // 判断token是否匹配
+        bool match (Tag aim_token, Tag temp_token);
+
+        //
+        // 以下是递归下降实现
+        //
+
+        void program ();
+
+        void block ();
+
+        void statement ();
+
+        void condition ();
+
+        void expression ();
+
+        void term ();
+
+        void factor ();
+
+        void const_declare ();
+
+        void var_declare ();
+
+        void procedure_declare ();
+
+        void assign_statement ();
+
+        void condition_statement ();
+
+        void while_statement ();
+
+        void call_statement ();
+
+        void read_statement ();
+
+        void complex_statement ();
+
+        void write_statement ();
+        // 以下是LL(1)实现的block部分
+        void block_ll1();
     private:
         // 预测分析表
         vector <vector <Tag>> table;
