@@ -108,9 +108,16 @@ class Parser {
         void complex_statement ();
 
         void write_statement ();
+
         // 以下是LL(1)实现的block部分
         void block_ll1();
+
+        // 判断元素是否在set中
+        bool is_in (Tag t, set <Tag> s);
     private:
+        // 向前看Tag
+        Tag lookahead;
+
         // 预测分析表
         vector <vector <Tag>> table;
         
@@ -151,6 +158,8 @@ class Parser {
 
         // 非终结符集合
         static vector <Tag> Vn;
+
+        static set <Tag> block_start;
 };
 
 vector <Production> Parser::productions = {
@@ -319,6 +328,12 @@ set <Tag> Parser::factor_follow = {
         DOSYM
 };
 
+set <Tag> Parser::block_start = {
+        CONSTSYM,
+        VARSYM,
+        PROCSYM
+};
+
 void Parser::init_first () {
     // program
     string program = "program";
@@ -381,5 +396,176 @@ void Parser::init_follow () {
     string factor = "factor";
     auto pair_factor = make_pair(factor, factor_follow);
     follows.insert(pair_factor);
+}
+
+
+void Parser::parse() {
+    // analysis.push(PSTART);
+
+    // 当token没有被消费完的时候，调用program
+    while (get_next_token() != PROEND) {
+        program();
+    }
+    
+}
+
+// 获取token列表中下一个token，当程序结束时，返回PROEND这个Tag
+Tag Parser::get_next_token () {
+    if (!tokens.empty()) {
+        Token * temp_token = tokens[0];
+        tokens.pop_back();
+        lookahead = temp_token -> get_tag();
+        return temp_token -> get_tag();
+    }
+    else return PROEND;
+}
+
+bool Parser::is_vn (Tag t) {
+    for (auto a:Vn) {
+        if (a == t) {
+            return true;
+        }
+    }
+    return false;
+} 
+
+bool Parser::is_vt (Tag t) {
+    for (auto a:Vt) {
+        if (a == t) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Parser::in_first (Tag t, string pro) {
+    for (auto i:firsts) {
+        if (i.first == pro) {
+            return i.second.find(t) != i.second.end();
+        }
+    }
+}
+
+bool Parser::in_follow (Tag t, string pro) {
+    for (auto i:follows) {
+        if (i.first == pro) {
+            return i.second.find(t) != i.second.end();
+        }
+    }
+}
+
+void Parser::generate_table () {
+    for (auto first:firsts) {
+
+    }
+    
+
+    for (auto follow:follows) {
+
+    }
+}
+
+void Parser::generate () {
+    
+}
+
+void Parser::program () {
+    block();
+    get_next_token();
+    if (match(DOTSYM, lookahead)) {
+        return;
+    } else {
+        cout << "syntax error ,Code:" << DOTSYM;
+    }
+}
+
+void Parser::block () {
+    do {
+        if (match(CONSTSYM, lookahead)) {
+            const_declare();
+        } else if (match(VARSYM, lookahead)) {
+            var_declare();
+        } else if (match(PROCSYM, lookahead)) {
+            procedure_declare();
+        } else {
+            statement();
+        }
+    } while (is_in(lookahead, block_start));
+}
+
+void Parser::statement () {
+
+}
+
+void Parser::condition () {
+
+}
+
+void Parser::expression () {
+
+}
+
+void Parser::term () {
+    factor();
+} 
+
+void Parser::factor () {
+    Tag next_token = get_next_token();
+//     switch (next_token) {
+//         case IDESYM:
+
+//     }
+}
+
+void Parser::const_declare () {
+
+}
+
+void Parser::var_declare () {
+
+}
+
+void Parser::procedure_declare () {
+
+}
+
+void Parser::assign_statement () {
+
+}
+
+void Parser::condition_statement () {
+
+}
+
+void Parser::while_statement () {
+
+}
+
+void Parser::call_statement () {
+
+}
+
+void Parser::read_statement () {
+
+}
+
+void Parser::write_statement () {
+
+}
+
+void Parser::complex_statement () {
+    
+}
+
+bool Parser::match (Tag aim_token, Tag temp_token) {
+    if (aim_token == temp_token) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool Parser::is_in (Tag t, set <Tag> s) {
+    return s.find(t) != s.end();
 }
 #endif
