@@ -69,7 +69,7 @@ class Parser {
         void init_follow ();
 
         // 判断token是否匹配
-        bool match (Tag aim_token, Tag temp_token);
+        bool match (Tag aim_token, Token * temp_token);
 
         //
         // 以下是递归下降实现
@@ -116,7 +116,7 @@ class Parser {
         bool is_in (Tag t, set <Tag> s);
     private:
         // 向前看Tag
-        Tag lookahead;
+        Token* lookahead;
 
         // 预测分析表
         vector <vector <Tag>> table;
@@ -414,7 +414,7 @@ Tag Parser::get_next_token () {
     if (!tokens.empty()) {
         Token * temp_token = tokens[0];
         tokens.erase(tokens.begin());
-        lookahead = temp_token -> get_tag();
+        lookahead = temp_token;
         return temp_token -> get_tag();
     }
     else return PROEND;
@@ -474,7 +474,7 @@ void Parser::program () {
     if (match(DOTSYM, lookahead)) {
         return;
     } else {
-        cout << "syntax error ,Should be .,Code:" << DOTSYM;
+        cout << "syntax error ,Should be .,Code:" << DOTSYM << " at line " << lookahead -> get_line() << endl;
     }
 }
 
@@ -488,7 +488,7 @@ void Parser::block () {
                 get_next_token();
             }
             if (!match(SEMSYM, lookahead)) {
-                cout << "syntax error ,Should be ;,Code:" << SEMSYM;
+                cout << "syntax error ,Should be ;,Code:"  << " at line " << lookahead -> get_line() << endl;
             }
             get_next_token();
         } else if (match(VARSYM, lookahead)) {
@@ -498,28 +498,74 @@ void Parser::block () {
                 var_declare();
                 get_next_token();
             }
-            get_next_token();
+            // get_next_token();
             if (!match(SEMSYM, lookahead)) {
-                cout << "syntax error ,Should be ;,Code:" << SEMSYM;
+                cout << "syntax error ,Should be ;,Code:" << SEMSYM <<   " at line " << lookahead -> get_line() << endl;
             }
+            get_next_token();
         } else if (match(PROCSYM, lookahead)) {
             procedure_declare();
         } else {
             statement();
         }
-    } while (is_in(lookahead, block_start));
+    } while (is_in(lookahead -> get_tag(), block_start));
 }
 
 void Parser::statement () {
-
+    switch (lookahead -> get_tag()) {
+        case IDESYM:
+            assign_statement();
+            break;
+        case IFSYM:
+            condition_statement();
+            break;
+        case WHILESYM:
+            while_statement();
+            break;
+        case CALLSYM:
+            call_statement();
+            break;
+        case READSYM:
+            read_statement();
+            break;
+        case WRITESYM:
+            write_statement();
+            break;
+        case BEGINSYM:
+            complex_statement();
+            break;
+        default:
+            return;
+    }
 }
 
 void Parser::condition () {
+    expression();
+    get_next_token();
+    if (!match(EQSYM, lookahead)||
+        !match(LSYM, lookahead) ||
+        !match(GSYM, lookahead) ||
+        !match(LEQSYM, lookahead)||
+        !match(GEQSYM, lookahead)||
+        !match(NEQSYM, lookahead)) {
 
+    }
+    expression();
 }
 
 void Parser::expression () {
-
+    get_next_token();
+    if (match(PLUSSYM, lookahead) ||
+        match(SUBSYM, lookahead)) {
+            get_next_token();
+    }
+    term();
+    get_next_token();
+    while(match(PLUSSYM, lookahead)||
+          match(SUBSYM, lookahead)) {
+            term();
+            get_next_token();
+    }
 }
 
 void Parser::term () {
@@ -527,11 +573,22 @@ void Parser::term () {
 } 
 
 void Parser::factor () {
-    Tag next_token = get_next_token();
-//     switch (next_token) {
-//         case IDESYM:
+    get_next_token();
+    switch (lookahead -> get_tag()) {
+        case IDESYM:
+            break;
+        case NUMSYM:
+            break;
+        case LEFTBRACKET:
+            expression();
+            get_next_token();
+            if (!match(RIGHTBRACKET, lookahead)) {
 
-//     }
+            }
+            break;
+        default:
+            cout << "syntax error" << EQSYM;
+    }
 }
 
 void Parser::const_declare () {
@@ -586,35 +643,96 @@ void Parser::procedure_declare () {
 }
 
 void Parser::assign_statement () {
+    get_next_token();
+    if (!match(ASSIGNSYM, lookahead)) {
 
+    }
+    expression();
 }
 
 void Parser::condition_statement () {
+    condition();
+    get_next_token();
+    if (!match(THENSYM, lookahead)) {
 
+    }
+    statement();
+    get_next_token();
+    if (match(ELSESYM, lookahead)) {
+        statement();
+    }
 }
 
 void Parser::while_statement () {
+    condition();
+    get_next_token();
+    if (!match(DOSYM, lookahead)) {
 
+    }
+    get_next_token();
+    statement();
 }
 
 void Parser::call_statement () {
+    if (!match(IDESYM, lookahead)) {
 
+    }
 }
 
 void Parser::read_statement () {
+    get_next_token();
+    if (!match(LEFTBRACKET, lookahead)) {
+        if (!match(IDESYM, lookahead)) {
 
+        }
+        get_next_token();
+        while (match(COMMASYM, lookahead)) {
+            get_next_token();
+            if (!match(IDESYM, lookahead)) {
+
+            }
+            get_next_token();
+        }
+        if (!match(RIGHTBRACKET, lookahead)) {
+            
+        }
+    }
 }
 
 void Parser::write_statement () {
+    get_next_token();
+    if (!match(LEFTBRACKET, lookahead)) {
+        if (!match(IDESYM, lookahead)) {
 
+        }
+        get_next_token();
+        while (match(COMMASYM, lookahead)) {
+            get_next_token();
+            if (!match(IDESYM, lookahead)) {
+
+            }
+            get_next_token();
+        }
+        if (!match(RIGHTBRACKET, lookahead)) {
+            
+        }
+    }
 }
 
 void Parser::complex_statement () {
-    
+    statement();
+    get_next_token();
+    while (match(SEMSYM, lookahead)) {
+        statement();
+        get_next_token();
+    }
+    if (!match(ENDSYM, lookahead)) {
+        
+    }
 }
 
-bool Parser::match (Tag aim_token, Tag temp_token) {
-    if (aim_token == temp_token) {
+bool Parser::match (Tag aim_token, Token * temp_token) {
+    if (aim_token == temp_token -> get_tag()) {
         return true;
     } else {
         return false;

@@ -1,4 +1,4 @@
-const ADD = 1, SUB = 2, MULT = 3, DIV = 4;
+const ADD = 1, SUB = 2, MULT = 3, DIV = 4 ;
 var op , x , y , done;
 
 procedure calculate;
