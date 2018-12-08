@@ -42,13 +42,18 @@ vector <Token *> Laxer::get_tokens () {
 }
 
 void Laxer::tokenizer () {
-
+    int count = 0;
     // 在开始时，置state为START
     char_pos = -1;
     state = START;
     string lexem = "";
+    char look_before;
+
     while (true) {
         char ch = get_next_char();
+        if (ch == '\n' && look_before != '\n') {
+            increase_line();
+        }
 
         if (ch == '#') {
             break;
@@ -124,7 +129,7 @@ void Laxer::tokenizer () {
                             state = PLIDEN;
                             lexem = lexem + ch;
                         } else if ( ch == '\n' ) {
-                            increase_line();
+                            // increase_line();
                         } else if ( isspace( ch ) ) {
                             state = DONE;
                         } else if ( ch == '.' ) {
@@ -227,10 +232,11 @@ void Laxer::tokenizer () {
             cout << "ERROR AT LINE" << " ---->Line" << line_number << endl;
             exit(0);
         }
+        look_before = ch;
     }
 
     cout << endl;
-    cout << "一次扫描完成，开始做详细的分类" << endl;
+    // cout << "一次扫描完成，开始做详细的分类" << endl;
     cout << endl;
 
     // 一次扫描完成，开始做详细的分类
@@ -242,6 +248,6 @@ void Laxer::tokenizer () {
                 }
             }
         }
-        cout << i -> get_lexem() << "  "<<i -> get_tag() << endl;
+        // cout << i -> get_lexem() << "  "<<i -> get_tag() << endl;
     }
 }

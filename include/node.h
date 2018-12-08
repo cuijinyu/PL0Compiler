@@ -1,8 +1,18 @@
 #ifndef NODE_H
 #define NODE_H
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+class Node{
+    public:
+        Node (string type) {
+            this -> type = type;
+        };
+        ~Node () {
 
-// 抽象语法树节点类
-class Node {
-
+        };
+    private:
+        string type;
 };
 #endif

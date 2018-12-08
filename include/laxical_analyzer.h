@@ -36,7 +36,7 @@ class Laxer
 
         Laxer (string file_path) {
           this -> file_path = file_path;
-          line_number = 0;
+          line_number = 1;
           char_pos = -1;
           open_source_file();
         };
