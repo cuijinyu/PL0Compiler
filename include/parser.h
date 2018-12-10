@@ -57,7 +57,12 @@ class Parser {
         // 开始语法分析
         void parse ();
 
+        // 向前看的两个方法
         Tag get_next_token ();
+
+        Token * look_next_token();
+
+        void put_back_token ();
 
         // 生成预测分析表
         void generate_table ();
@@ -69,7 +74,7 @@ class Parser {
         void init_follow ();
 
         // 判断token是否匹配
-        bool match (Tag aim_token, Token * temp_token);
+        bool match (Tag aim_token,Token * temp_token);
 
         //
         // 以下是递归下降实现
@@ -108,6 +113,9 @@ class Parser {
         void complex_statement ();
 
         void write_statement ();
+
+        // 错误汇报函数
+        void error(Tag code, string type,int line);
 
         // 以下是LL(1)实现的block部分
         void block_ll1();
@@ -334,6 +342,10 @@ set <Tag> Parser::block_start = {
         PROCSYM
 };
 
+void Parser::error (Tag code, string type, int line ) {
+    cout << "Syntax Error: type ->" << type <<" [Code]:"<< code << " at line " << line << endl;
+}
+
 void Parser::init_first () {
     // program
     string program = "program";
@@ -403,7 +415,7 @@ void Parser::parse() {
     // analysis.push(PSTART);
 
     // 当token没有被消费完的时候，调用program
-    while (get_next_token() != PROEND) {
+    while (look_next_token() -> get_tag() != PROEND) {
         program();
     }
     
@@ -419,6 +431,16 @@ Tag Parser::get_next_token () {
     }
     else return PROEND;
 }
+
+Token * Parser::look_next_token () {
+    if (!tokens.empty()) {
+        return tokens[0];
+    }
+}
+
+// void Parser::put_back_token () {
+//     tokens.insert(0, lookahead);
+// }
 
 bool Parser::is_vn (Tag t) {
     for (auto a:Vn) {
@@ -470,49 +492,42 @@ void Parser::generate () {
 
 void Parser::program () {
     block();
-    get_next_token();
-    if (match(DOTSYM, lookahead)) {
-        return;
-    } else {
-        cout << "syntax error ,Should be .,Code:" << DOTSYM << " at line " << lookahead -> get_line() << endl;
-    }
 }
 
 void Parser::block () {
     do {
-        if (match(CONSTSYM, lookahead)) {
+        Token * temp_token = look_next_token();
+        if (match(CONSTSYM, temp_token)) {
+            get_next_token();
             const_declare();
-            get_next_token();
-            while (match(COMMASYM, lookahead)) {
+            while(match(COMMASYM, look_next_token())) {
+                get_next_token();
                 const_declare();
-                get_next_token();
             }
-            if (!match(SEMSYM, lookahead)) {
-                cout << "syntax error ,Should be ;,Code:"  << " at line " << lookahead -> get_line() << endl;
+            if (!match(SEMSYM, look_next_token())) {
+                error(SEMSYM, "const ", look_next_token() -> get_line());
             }
+
             get_next_token();
-        } else if (match(VARSYM, lookahead)) {
+        } else if (match(VARSYM, temp_token)) {
+            get_next_token();
             var_declare();
-            get_next_token();
-            while (match(COMMASYM, lookahead)) {
-                var_declare();
-                get_next_token();
-            }
-            // get_next_token();
-            if (!match(SEMSYM, lookahead)) {
-                cout << "syntax error ,Should be ;,Code:" << SEMSYM <<   " at line " << lookahead -> get_line() << endl;
+            if (!match(SEMSYM, look_next_token())) {
+                error(SEMSYM, "var ", look_next_token() -> get_line());
             }
             get_next_token();
-        } else if (match(PROCSYM, lookahead)) {
+        } else if (match(PROCSYM, temp_token)) {
             procedure_declare();
-        } else {
-            statement();
         }
-    } while (is_in(lookahead -> get_tag(), block_start));
+    } while (is_in(look_next_token() -> get_tag(), block_start));
+        statement();
 }
 
 void Parser::statement () {
-    switch (lookahead -> get_tag()) {
+    switch (look_next_token() -> get_tag()) {
+        case BEGINSYM:
+            complex_statement();
+            break;
         case IDESYM:
             assign_statement();
             break;
@@ -531,9 +546,6 @@ void Parser::statement () {
         case WRITESYM:
             write_statement();
             break;
-        case BEGINSYM:
-            complex_statement();
-            break;
         default:
             return;
     }
@@ -541,31 +553,21 @@ void Parser::statement () {
 
 void Parser::condition () {
     expression();
-    get_next_token();
-    if (!match(EQSYM, lookahead)||
-        !match(LSYM, lookahead) ||
-        !match(GSYM, lookahead) ||
-        !match(LEQSYM, lookahead)||
-        !match(GEQSYM, lookahead)||
-        !match(NEQSYM, lookahead)) {
-
-    }
-    expression();
 }
 
 void Parser::expression () {
-    get_next_token();
-    if (match(PLUSSYM, lookahead) ||
-        match(SUBSYM, lookahead)) {
+    if (match(PLUSSYM, look_next_token())||
+        match(SUBSYM, look_next_token())) {
             get_next_token();
     }
     term();
     get_next_token();
-    while(match(PLUSSYM, lookahead)||
-          match(SUBSYM, lookahead)) {
-            term();
+    if (match(PLUSSYM, look_next_token())||
+        match(SUBSYM, look_next_token())) {
             get_next_token();
+            term();
     }
+    get_next_token();
 }
 
 void Parser::term () {
@@ -573,161 +575,136 @@ void Parser::term () {
 } 
 
 void Parser::factor () {
-    get_next_token();
-    switch (lookahead -> get_tag()) {
+    switch (look_next_token() -> get_tag()) {
         case IDESYM:
             break;
         case NUMSYM:
             break;
         case LEFTBRACKET:
             expression();
-            get_next_token();
-            if (!match(RIGHTBRACKET, lookahead)) {
-
+            if (!match(RIGHTBRACKET, look_next_token())) {
+                error(RIGHTBRACKET, "factor", look_next_token() -> get_line());
             }
             break;
-        default:
-            cout << "syntax error" << EQSYM;
     }
 }
 
 void Parser::const_declare () {
-    get_next_token();
-    if (!match(IDESYM, lookahead)) {
-        cout << "syntax error ,Should be identity,Code:" << IDESYM;
-        exit(1);
+    if (!match(IDESYM, look_next_token())) {
+        error(IDESYM, "const declare", look_next_token() -> get_line());
     }
+    get_next_token();
+    if (!match(EQSYM, look_next_token())) {
 
-    get_next_token();
-    if (!match(EQSYM, lookahead)) {
-        cout << "syntax error ,Should be =,Code:" << EQSYM;
-        exit(1);
     }
-
     get_next_token();
-    if (!match(NUMSYM, lookahead)) {
-        cout << "syntax error ,Should be number,Code:" << NUMSYM;
+    if (!match(NUMSYM, look_next_token())) {
+        error(NUMSYM, "const declare", look_next_token() -> get_line());
     }
+    get_next_token();
 }
 
 void Parser::var_declare () {
+    if (!match(IDESYM, look_next_token())) {
+        error(IDESYM, "var declare", look_next_token() -> get_line());
+    }
     get_next_token();
-    if (!match(IDESYM, lookahead)) {
-        cout << "syntax error ,Should be identity,Code:" << NUMSYM;
+    while (match(COMMASYM, look_next_token())) {
+        get_next_token();
+        if (!match(IDESYM, look_next_token())) {
+            error(IDESYM, "var declare", look_next_token() -> get_line());
+        }
+        get_next_token();
     }
 }
 
 void Parser::procedure_declare () {
     get_next_token();
-    if (!match(IDESYM, lookahead)) {
-
+    if (!match(IDESYM, look_next_token())) {
+        error(IDESYM, "procedure header", look_next_token() -> get_line());
     }
 
     get_next_token();
-    if (!match(SEMSYM, lookahead)) {
-
+    if (!match(SEMSYM, look_next_token())) {
+        error(SEMSYM, "procedure declare", look_next_token() -> get_line());
     }
 
     get_next_token();
     block();
-
-    get_next_token();
-    if (!match(SEMSYM, lookahead)) {
-
+    if (!match(SEMSYM, look_next_token())) {
+        error(SEMSYM, "procedure declare", look_next_token() -> get_line());
     }
 
     get_next_token();
-    while (match(PROCSYM, lookahead)) {
+    if (match(PROCSYM, look_next_token())) {
         procedure_declare();
     }
 }
 
 void Parser::assign_statement () {
     get_next_token();
-    if (!match(ASSIGNSYM, lookahead)) {
-
+    if (!match(ASSIGNSYM, look_next_token())) {
+        error(ASSIGNSYM, "assign", look_next_token() -> get_line());
     }
+    get_next_token();
     expression();
 }
 
 void Parser::condition_statement () {
+    get_next_token();
     condition();
-    get_next_token();
-    if (!match(THENSYM, lookahead)) {
-
+    if (!match(THENSYM, look_next_token())) {
+        error(THENSYM, "condition statement", look_next_token() -> get_line());
     }
-    statement();
     get_next_token();
-    if (match(ELSESYM, lookahead)) {
+    statement();
+    if (match(ELSESYM, look_next_token())) {
+        get_next_token();
         statement();
     }
 }
 
 void Parser::while_statement () {
-    condition();
     get_next_token();
-    if (!match(DOSYM, lookahead)) {
-
+    condition();
+    if (!match(WHILESYM, look_next_token())) {
+        error(WHILESYM, "while", look_next_token() -> get_line());
+    }
+    get_next_token();
+    if (!match(DOSYM, look_next_token())) {
+        error(DOSYM, "while", look_next_token() -> get_line());
     }
     get_next_token();
     statement();
 }
 
 void Parser::call_statement () {
-    if (!match(IDESYM, lookahead)) {
-
+    get_next_token();
+    if (!match(IDESYM, look_next_token())) {
+        error(IDESYM, "call", look_next_token() -> get_line());
     }
+    get_next_token();
 }
 
 void Parser::read_statement () {
-    get_next_token();
-    if (!match(LEFTBRACKET, lookahead)) {
-        if (!match(IDESYM, lookahead)) {
 
-        }
-        get_next_token();
-        while (match(COMMASYM, lookahead)) {
-            get_next_token();
-            if (!match(IDESYM, lookahead)) {
-
-            }
-            get_next_token();
-        }
-        if (!match(RIGHTBRACKET, lookahead)) {
-            
-        }
-    }
 }
 
 void Parser::write_statement () {
-    get_next_token();
-    if (!match(LEFTBRACKET, lookahead)) {
-        if (!match(IDESYM, lookahead)) {
 
-        }
-        get_next_token();
-        while (match(COMMASYM, lookahead)) {
-            get_next_token();
-            if (!match(IDESYM, lookahead)) {
-
-            }
-            get_next_token();
-        }
-        if (!match(RIGHTBRACKET, lookahead)) {
-            
-        }
-    }
 }
 
 void Parser::complex_statement () {
-    statement();
     get_next_token();
-    while (match(SEMSYM, lookahead)) {
-        statement();
+    statement();
+    while(match(SEMSYM, look_next_token())) {
         get_next_token();
-    }
-    if (!match(ENDSYM, lookahead)) {
-        
+        if (match(ENDSYM, look_next_token())) {
+            get_next_token();
+            // error(ENDSYM, "complex statement", look_next_token() -> get_line());
+            return;
+        }
+        statement();
     }
 }
 
