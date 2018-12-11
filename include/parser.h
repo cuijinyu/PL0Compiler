@@ -552,6 +552,20 @@ void Parser::statement () {
 }
 
 void Parser::condition () {
+    if (match(ODDSYM, look_next_token())) {
+        get_next_token();
+        expression();
+    }
+    expression();
+    if (!(match(EQSYM, look_next_token())||
+        match(NEQSYM, look_next_token())||
+        match(LEQSYM, look_next_token())||
+        match(LSYM, look_next_token())||
+        match(GSYM, look_next_token())||
+        match(GEQSYM, look_next_token()))) {
+            error(EQSYM, "conditioin", look_next_token() -> get_line());
+    }
+    get_next_token();
     expression();
 }
 
@@ -563,15 +577,24 @@ void Parser::expression () {
     term();
     get_next_token();
     if (match(PLUSSYM, look_next_token())||
-        match(SUBSYM, look_next_token())) {
+        match(SUBSYM, look_next_token())
+        // match(MULTSYM, look_next_token())||
+        // match(DIVSYM, look_next_token())
+        ) {
             get_next_token();
             term();
+            get_next_token();
     }
-    get_next_token();
 }
 
 void Parser::term () {
     factor();
+    if (match(MULTSYM, tokens[1])||
+        match(DIVSYM, tokens[1])) {
+            get_next_token();
+            get_next_token();
+            factor();
+    }
 } 
 
 void Parser::factor () {
@@ -665,12 +688,12 @@ void Parser::condition_statement () {
 }
 
 void Parser::while_statement () {
-    get_next_token();
-    condition();
     if (!match(WHILESYM, look_next_token())) {
         error(WHILESYM, "while", look_next_token() -> get_line());
     }
     get_next_token();
+    condition();
+    // get_next_token();
     if (!match(DOSYM, look_next_token())) {
         error(DOSYM, "while", look_next_token() -> get_line());
     }
@@ -687,11 +710,36 @@ void Parser::call_statement () {
 }
 
 void Parser::read_statement () {
-
+    if (!match(READSYM, look_next_token())) {
+        error(READSYM, "read statement", look_next_token() -> get_tag());
+    }
+    get_next_token();
 }
 
 void Parser::write_statement () {
-
+    if (!match(WRITESYM, look_next_token())) {
+        error(WRITESYM, "write statement", look_next_token() -> get_tag());
+    }
+    get_next_token();
+    if (!match(LEFTBRACKET, look_next_token())) {
+        error(LEFTBRACKET, "write statement", look_next_token() -> get_line());
+    }
+    get_next_token();
+    if (!match(IDESYM, look_next_token())) {
+        error(IDESYM, "write statement", look_next_token() -> get_line());
+    }
+    get_next_token();
+    while (match(COMMASYM, look_next_token())) {
+        get_next_token();
+        if (!match(IDESYM, look_next_token())) {
+            error(IDESYM, "write statement", look_next_token() -> get_line());
+        }
+        get_next_token();
+    }
+    if (!match(RIGHTBRACKET, look_next_token())) {
+        error(RIGHTBRACKET, "right statement", look_next_token() -> get_line());
+    }
+    get_next_token();
 }
 
 void Parser::complex_statement () {

@@ -1,6 +1,5 @@
 const ADD = 1, SUB = 2, MULT = 3, DIV = 4 ;
 var op , x , y , done;
-
 procedure calculate;
 	procedure add;
 		begin
@@ -18,7 +17,7 @@ procedure calculate;
 			while c > 0 do
 				begin
 					call add;
-					c :=c -1;
+					c := c - 1;
 				end;
 		end;
 	procedure div;
@@ -35,7 +34,7 @@ procedure calculate;
 		else if op = MULT then call mult
 		else if op = DIV then call div
 		else done := 1;
-		if done = 0 then write x;
+		if done = 0 then write ( x );
 	end;
 	begin
 		done := 0;

@@ -242,7 +242,7 @@ void Laxer::tokenizer () {
     // 一次扫描完成，开始做详细的分类
     for (auto i:tokens) {
         if (i -> get_tag() == IDESYM) {
-            for (int j = 0; j < 12; j++) {
+            for (int j = 0; j < 14; j++) {
                 if (reserved_word_list[j].lexem.compare(i -> get_lexem()) == 0) {
                     i -> set_tag(reserved_word_list[j].t);
                 }
