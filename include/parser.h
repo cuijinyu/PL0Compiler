@@ -492,6 +492,10 @@ void Parser::generate () {
 
 void Parser::program () {
     block();
+    if (!match(DOTSYM, look_next_token())) {
+        error(DOTSYM, "program end", look_next_token() -> get_line());
+    }
+    // get_next_token();
 }
 
 void Parser::block () {
