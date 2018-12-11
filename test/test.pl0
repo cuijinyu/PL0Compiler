@@ -34,21 +34,21 @@ procedure calculate;
 		else if op = MULT then call mult
 		else if op = DIV then call div
 		else done := 1;
-		if done = 0 then write ( x );
+		if done = 0 then write ( x ) ;
 	end;
 	begin
-		done := 0;
-		read x;
+		done := 0 ;
+		read ( x ) ;
 		while done = 0 do
 			begin
-				read op;
+				read ( op ) ;
 				if op < 1 then done := 1
 				else if op > 4 then done := 1;
 
 				if done = 0 then
 					begin
-						read y;
+						read ( y ) ;
 						call calculate;
-					end;
-			end;
-	end.
+					end ;
+			end ;
+	end .

@@ -714,6 +714,25 @@ void Parser::read_statement () {
         error(READSYM, "read statement", look_next_token() -> get_tag());
     }
     get_next_token();
+    if (!match(LEFTBRACKET, look_next_token())) {
+        error(LEFTBRACKET, "read statement", look_next_token() -> get_line());
+    }
+    get_next_token();
+    if (!match(IDESYM, look_next_token())) {
+        error(IDESYM, "read statement", look_next_token() -> get_line());
+    }
+    get_next_token();
+    while (match(COMMASYM, look_next_token())) {
+        get_next_token();
+        if (!match(IDESYM, look_next_token())) {
+            error(IDESYM, "read statement", look_next_token() -> get_line());
+        }
+        get_next_token();
+    }
+    if (!match(RIGHTBRACKET, look_next_token())) {
+        error(RIGHTBRACKET, "read statement", look_next_token() -> get_line());
+    }
+    get_next_token();
 }
 
 void Parser::write_statement () {
