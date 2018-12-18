@@ -7,6 +7,8 @@
 #include <vector>
 #include <stack>
 #include <token.h>
+#include <node.h>
+#include <ast.h>
 using namespace std;
 
 
@@ -80,39 +82,39 @@ class Parser {
         // 以下是递归下降实现
         //
 
-        void program ();
+        void program (Ast * father);
 
-        void block ();
+        void block (Ast * father);
 
-        void statement ();
+        void statement (Ast * father);
 
-        void condition ();
+        void condition (Ast * father);
 
-        void expression ();
+        void expression (Ast * father);
 
-        void term ();
+        void term (Ast * father);
 
-        void factor ();
+        void factor (Ast * father);
 
-        void const_declare ();
+        void const_declare (Ast * father);
 
-        void var_declare ();
+        void var_declare (Ast * father);
 
-        void procedure_declare ();
+        void procedure_declare (Ast * father);
 
-        void assign_statement ();
+        void assign_statement (Ast * father);
 
-        void condition_statement ();
+        void condition_statement (Ast * father);
 
-        void while_statement ();
+        void while_statement (Ast * father);
 
-        void call_statement ();
+        void call_statement (Ast * father);
 
-        void read_statement ();
+        void read_statement (Ast * father);
 
-        void complex_statement ();
+        void complex_statement (Ast * father);
 
-        void write_statement ();
+        void write_statement (Ast * father);
 
         // 错误汇报函数
         void error(Tag code, string type,int line);
@@ -122,7 +124,15 @@ class Parser {
 
         // 判断元素是否在set中
         bool is_in (Tag t, set <Tag> s);
+        
+        // 获取抽象语法树
+        Ast * get_root () {
+            return root;
+        };
     private:
+        // 抽象语法树
+        Ast * root;
+
         // 向前看Tag
         Token* lookahead;
 
@@ -413,10 +423,12 @@ void Parser::init_follow () {
 
 void Parser::parse() {
     // analysis.push(PSTART);
+    Ast * root = new Ast("root");
+    this -> root = root;
 
     // 当token没有被消费完的时候，调用program
-    while (look_next_token() -> get_tag() != PROEND) {
-        program();
+    while (!this -> tokens.empty()) {
+        program(root);
     }
     
 }
@@ -490,77 +502,91 @@ void Parser::generate () {
     
 }
 
-void Parser::program () {
-    block();
+void Parser::program (Ast * father) {
+    Ast * program = new Ast("program");
+    father -> add_node(program);
+    block(program);
     if (!match(DOTSYM, look_next_token())) {
         error(DOTSYM, "program end", look_next_token() -> get_line());
     }
-    // get_next_token();
+    program -> add_node(look_next_token());
+    get_next_token();
 }
 
-void Parser::block () {
+void Parser::block (Ast * father) {
+    Ast * block = new Ast("block");
+    father -> add_node(block);
     do {
         Token * temp_token = look_next_token();
         if (match(CONSTSYM, temp_token)) {
+            block -> add_node(look_next_token());
             get_next_token();
-            const_declare();
+            const_declare(block);
             while(match(COMMASYM, look_next_token())) {
+                block -> add_node(look_next_token());
                 get_next_token();
-                const_declare();
+                const_declare(block);
             }
             if (!match(SEMSYM, look_next_token())) {
                 error(SEMSYM, "const ", look_next_token() -> get_line());
             }
-
+            block -> add_node(look_next_token());
             get_next_token();
         } else if (match(VARSYM, temp_token)) {
+            block -> add_node(look_next_token());
             get_next_token();
-            var_declare();
+            var_declare(block);
             if (!match(SEMSYM, look_next_token())) {
                 error(SEMSYM, "var ", look_next_token() -> get_line());
             }
+            block -> add_node(look_next_token());
             get_next_token();
         } else if (match(PROCSYM, temp_token)) {
-            procedure_declare();
+            procedure_declare(block);
         }
     } while (is_in(look_next_token() -> get_tag(), block_start));
-        statement();
+        statement(block);
 }
 
-void Parser::statement () {
+void Parser::statement (Ast * father) {
+    Ast * statement = new Ast("statement");
+    father -> add_node(statement);
     switch (look_next_token() -> get_tag()) {
         case BEGINSYM:
-            complex_statement();
+            complex_statement(statement);
             break;
         case IDESYM:
-            assign_statement();
+            assign_statement(statement);
             break;
         case IFSYM:
-            condition_statement();
+            condition_statement(statement);
             break;
         case WHILESYM:
-            while_statement();
+            while_statement(statement);
             break;
         case CALLSYM:
-            call_statement();
+            call_statement(statement);
             break;
         case READSYM:
-            read_statement();
+            read_statement(statement);
             break;
         case WRITESYM:
-            write_statement();
+            write_statement(statement);
             break;
         default:
             return;
     }
 }
 
-void Parser::condition () {
+void Parser::condition (Ast * father) {
+    Ast * condition = new Ast("condition");
+    father -> add_node(condition);
     if (match(ODDSYM, look_next_token())) {
+        condition -> add_node(look_next_token());
         get_next_token();
-        expression();
+        expression(condition);
     }
-    expression();
+    expression(condition);
     if (!(match(EQSYM, look_next_token())||
         match(NEQSYM, look_next_token())||
         match(LEQSYM, look_next_token())||
@@ -569,46 +595,57 @@ void Parser::condition () {
         match(GEQSYM, look_next_token()))) {
             error(EQSYM, "conditioin", look_next_token() -> get_line());
     }
+    condition -> add_node(look_next_token());
     get_next_token();
-    expression();
+    expression(condition);
 }
 
-void Parser::expression () {
+void Parser::expression (Ast * father) {
+    Ast * expression = new Ast("expression");
+    father -> add_node(expression);
     if (match(PLUSSYM, look_next_token())||
         match(SUBSYM, look_next_token())) {
+            expression -> add_node(look_next_token());
             get_next_token();
     }
-    term();
+    term(expression);
+    expression -> add_node(look_next_token());
     get_next_token();
     if (match(PLUSSYM, look_next_token())||
         match(SUBSYM, look_next_token())
-        // match(MULTSYM, look_next_token())||
-        // match(DIVSYM, look_next_token())
         ) {
+            expression -> add_node(look_next_token());
             get_next_token();
-            term();
+            term(expression);
+            expression -> add_node(look_next_token());
             get_next_token();
     }
 }
 
-void Parser::term () {
-    factor();
+void Parser::term (Ast * father) {
+    Ast * term = new Ast("term");
+    father -> add_node(term);
+    factor(term);
     if (match(MULTSYM, tokens[1])||
         match(DIVSYM, tokens[1])) {
+            term -> add_node(look_next_token());
             get_next_token();
+            term -> add_node(look_next_token());
             get_next_token();
-            factor();
+            factor(term);
     }
 } 
 
-void Parser::factor () {
+void Parser::factor (Ast * father) {
+    Ast * factor = new Ast("factor");
+    father -> add_node(factor);
     switch (look_next_token() -> get_tag()) {
         case IDESYM:
             break;
         case NUMSYM:
             break;
         case LEFTBRACKET:
-            expression();
+            expression(factor);
             if (!match(RIGHTBRACKET, look_next_token())) {
                 error(RIGHTBRACKET, "factor", look_next_token() -> get_line());
             }
@@ -616,166 +653,216 @@ void Parser::factor () {
     }
 }
 
-void Parser::const_declare () {
+void Parser::const_declare (Ast * father) {
+    Ast * const_dec = new Ast("const_declare");
+    father -> add_node(const_dec);
     if (!match(IDESYM, look_next_token())) {
         error(IDESYM, "const declare", look_next_token() -> get_line());
     }
+    const_dec -> add_node(look_next_token());
     get_next_token();
     if (!match(EQSYM, look_next_token())) {
-
+        error(EQSYM, "const declare", look_next_token() -> get_line());
     }
+    const_dec -> add_node(look_next_token());
     get_next_token();
     if (!match(NUMSYM, look_next_token())) {
         error(NUMSYM, "const declare", look_next_token() -> get_line());
     }
+    const_dec -> add_node(look_next_token());
     get_next_token();
 }
 
-void Parser::var_declare () {
+void Parser::var_declare (Ast * father) {
+    Ast * var_dec = new Ast("var_declare");
+    father -> add_node(var_dec);
     if (!match(IDESYM, look_next_token())) {
         error(IDESYM, "var declare", look_next_token() -> get_line());
     }
+    var_dec -> add_node(look_next_token());
     get_next_token();
     while (match(COMMASYM, look_next_token())) {
+        var_dec -> add_node(look_next_token());
         get_next_token();
         if (!match(IDESYM, look_next_token())) {
             error(IDESYM, "var declare", look_next_token() -> get_line());
         }
+        var_dec -> add_node(look_next_token());
         get_next_token();
     }
 }
 
-void Parser::procedure_declare () {
+void Parser::procedure_declare (Ast * father) {
+    Ast * procedure = new Ast("procedure");
+    father -> add_node(procedure);
+    procedure -> add_node(look_next_token());
     get_next_token();
     if (!match(IDESYM, look_next_token())) {
         error(IDESYM, "procedure header", look_next_token() -> get_line());
     }
-
+    procedure -> add_node(look_next_token());
     get_next_token();
     if (!match(SEMSYM, look_next_token())) {
         error(SEMSYM, "procedure declare", look_next_token() -> get_line());
     }
-
+    procedure -> add_node(look_next_token());
     get_next_token();
-    block();
+    block(procedure);
     if (!match(SEMSYM, look_next_token())) {
         error(SEMSYM, "procedure declare", look_next_token() -> get_line());
     }
-
+    procedure -> add_node(look_next_token());
     get_next_token();
     if (match(PROCSYM, look_next_token())) {
-        procedure_declare();
+        procedure_declare(procedure);
     }
 }
 
-void Parser::assign_statement () {
+void Parser::assign_statement (Ast * father) {
+    Ast * assign = new Ast("assign");
+    father -> add_node(assign);
+    assign -> add_node(look_next_token());
     get_next_token();
     if (!match(ASSIGNSYM, look_next_token())) {
         error(ASSIGNSYM, "assign", look_next_token() -> get_line());
     }
+    assign -> add_node(look_next_token());
     get_next_token();
-    expression();
+    expression(assign);
 }
 
-void Parser::condition_statement () {
+void Parser::condition_statement (Ast * father) {
+    Ast * condition_sta = new Ast("condition");
+    father -> add_node(condition_sta);
+    condition_sta -> add_node(look_next_token());
     get_next_token();
-    condition();
+    condition(condition_sta);
     if (!match(THENSYM, look_next_token())) {
         error(THENSYM, "condition statement", look_next_token() -> get_line());
     }
+    condition_sta -> add_node(look_next_token());
     get_next_token();
-    statement();
+    statement(condition_sta);
     if (match(ELSESYM, look_next_token())) {
+        condition_sta -> add_node(look_next_token());
         get_next_token();
-        statement();
+        statement(condition_sta);
     }
 }
 
-void Parser::while_statement () {
+void Parser::while_statement (Ast * father) {
+    Ast * while_sta = new Ast("while_statement");
+    father -> add_node(while_sta);
     if (!match(WHILESYM, look_next_token())) {
         error(WHILESYM, "while", look_next_token() -> get_line());
     }
+    while_sta -> add_node(look_next_token());
     get_next_token();
-    condition();
+    condition(while_sta);
     // get_next_token();
     if (!match(DOSYM, look_next_token())) {
         error(DOSYM, "while", look_next_token() -> get_line());
     }
+    while_sta -> add_node(look_next_token());
     get_next_token();
-    statement();
+    statement(while_sta);
 }
 
-void Parser::call_statement () {
+void Parser::call_statement (Ast * father) {
+    Ast * call_sta = new Ast("call_statement");
+    father -> add_node(call_sta);
+    call_sta -> add_node(look_next_token());
     get_next_token();
     if (!match(IDESYM, look_next_token())) {
         error(IDESYM, "call", look_next_token() -> get_line());
     }
+    call_sta -> add_node(look_next_token());
     get_next_token();
 }
 
-void Parser::read_statement () {
+void Parser::read_statement (Ast * father) {
+    Ast * read_sta = new Ast("read_statement");
+    father -> add_node(read_sta);
     if (!match(READSYM, look_next_token())) {
         error(READSYM, "read statement", look_next_token() -> get_tag());
     }
+    read_sta -> add_node(look_next_token());
     get_next_token();
     if (!match(LEFTBRACKET, look_next_token())) {
         error(LEFTBRACKET, "read statement", look_next_token() -> get_line());
     }
+    read_sta -> add_node(look_next_token());
     get_next_token();
     if (!match(IDESYM, look_next_token())) {
         error(IDESYM, "read statement", look_next_token() -> get_line());
     }
+    read_sta -> add_node(look_next_token());
     get_next_token();
     while (match(COMMASYM, look_next_token())) {
+        read_sta -> add_node(look_next_token());
         get_next_token();
         if (!match(IDESYM, look_next_token())) {
             error(IDESYM, "read statement", look_next_token() -> get_line());
         }
+        read_sta -> add_node(look_next_token());
         get_next_token();
     }
     if (!match(RIGHTBRACKET, look_next_token())) {
         error(RIGHTBRACKET, "read statement", look_next_token() -> get_line());
     }
+    read_sta -> add_node(look_next_token());
     get_next_token();
 }
 
-void Parser::write_statement () {
+void Parser::write_statement (Ast * father) {
+    Ast * write_sta = new Ast("write_statement");
+    father -> add_node(write_sta);
     if (!match(WRITESYM, look_next_token())) {
         error(WRITESYM, "write statement", look_next_token() -> get_tag());
     }
+    write_sta -> add_node(look_next_token());
     get_next_token();
     if (!match(LEFTBRACKET, look_next_token())) {
         error(LEFTBRACKET, "write statement", look_next_token() -> get_line());
     }
+    write_sta -> add_node(look_next_token());
     get_next_token();
     if (!match(IDESYM, look_next_token())) {
         error(IDESYM, "write statement", look_next_token() -> get_line());
     }
     get_next_token();
     while (match(COMMASYM, look_next_token())) {
+        write_sta -> add_node(look_next_token());
         get_next_token();
         if (!match(IDESYM, look_next_token())) {
             error(IDESYM, "write statement", look_next_token() -> get_line());
         }
+        write_sta -> add_node(look_next_token());
         get_next_token();
     }
     if (!match(RIGHTBRACKET, look_next_token())) {
         error(RIGHTBRACKET, "right statement", look_next_token() -> get_line());
     }
+    write_sta -> add_node(look_next_token());
     get_next_token();
 }
 
-void Parser::complex_statement () {
+void Parser::complex_statement (Ast * father) {
+    Ast * complex_sta = new Ast("complex statement");
+    father -> add_node(complex_sta);
+    complex_sta -> add_node(look_next_token());
     get_next_token();
-    statement();
+    statement(complex_sta);
     while(match(SEMSYM, look_next_token())) {
+        complex_sta -> add_node(look_next_token());
         get_next_token();
         if (match(ENDSYM, look_next_token())) {
+            complex_sta -> add_node(look_next_token());
             get_next_token();
             // error(ENDSYM, "complex statement", look_next_token() -> get_line());
             return;
         }
-        statement();
+        statement(complex_sta);
     }
 }
 

@@ -14,10 +14,10 @@ OBJS = $(patsubst %, $(OBJDIR)/%, $(_OBJS))
 all: $(TARGET)
 
 $(TARGET):$(OBJS)
-	$(CXX) -g -o $@ $(OBJS)
+	$(CXX) -g -o $@ $(OBJS) -std=c++11
 
 $(OBJDIR)/%.o:$(SRCDIR)/%.cc
-	$(CXX) -g -c -o $@ $< $(CXXFLAG)
+	$(CXX) -g -c -o $@ $< $(CXXFLAG) -std=c++11
 .PHNOY:clean
 clean:
 	rm -rf $(BINDIR)/* $(OBJDIR)/*
