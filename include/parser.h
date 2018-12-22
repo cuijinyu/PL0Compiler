@@ -3,12 +3,12 @@
 #include <iostream>
 #include <set>
 #include <map>
-// #include <pair>
 #include <vector>
 #include <stack>
 #include <token.h>
 #include <node.h>
 #include <ast.h>
+#include <Regex>
 using namespace std;
 
 
@@ -450,10 +450,6 @@ Token * Parser::look_next_token () {
     }
 }
 
-// void Parser::put_back_token () {
-//     tokens.insert(0, lookahead);
-// }
-
 bool Parser::is_vn (Tag t) {
     for (auto a:Vn) {
         if (a == t) {
@@ -519,7 +515,7 @@ void Parser::block (Ast * father) {
     do {
         Token * temp_token = look_next_token();
         if (match(CONSTSYM, temp_token)) {
-            block -> add_node(look_next_token());
+            // block -> add_node(look_next_token());
             get_next_token();
             const_declare(block);
             while(match(COMMASYM, look_next_token())) {
@@ -533,7 +529,7 @@ void Parser::block (Ast * father) {
             block -> add_node(look_next_token());
             get_next_token();
         } else if (match(VARSYM, temp_token)) {
-            block -> add_node(look_next_token());
+            // block -> add_node(look_next_token());
             get_next_token();
             var_declare(block);
             if (!match(SEMSYM, look_next_token())) {
@@ -609,7 +605,7 @@ void Parser::expression (Ast * father) {
             get_next_token();
     }
     term(expression);
-    expression -> add_node(look_next_token());
+    // expression -> add_node(look_next_token());
     get_next_token();
     if (match(PLUSSYM, look_next_token())||
         match(SUBSYM, look_next_token())
@@ -617,7 +613,7 @@ void Parser::expression (Ast * father) {
             expression -> add_node(look_next_token());
             get_next_token();
             term(expression);
-            expression -> add_node(look_next_token());
+            // expression -> add_node(look_next_token());
             get_next_token();
     }
 }
@@ -628,7 +624,7 @@ void Parser::term (Ast * father) {
     factor(term);
     if (match(MULTSYM, tokens[1])||
         match(DIVSYM, tokens[1])) {
-            term -> add_node(look_next_token());
+            // term -> add_node(look_next_token());
             get_next_token();
             term -> add_node(look_next_token());
             get_next_token();
@@ -641,14 +637,18 @@ void Parser::factor (Ast * father) {
     father -> add_node(factor);
     switch (look_next_token() -> get_tag()) {
         case IDESYM:
+            factor -> add_node(look_next_token());
             break;
         case NUMSYM:
+            factor -> add_node(look_next_token());
             break;
         case LEFTBRACKET:
+            factor -> add_node(look_next_token());
             expression(factor);
             if (!match(RIGHTBRACKET, look_next_token())) {
                 error(RIGHTBRACKET, "factor", look_next_token() -> get_line());
             }
+            factor -> add_node(look_next_token());
             break;
     }
 }
@@ -656,6 +656,7 @@ void Parser::factor (Ast * father) {
 void Parser::const_declare (Ast * father) {
     Ast * const_dec = new Ast("const_declare");
     father -> add_node(const_dec);
+    const_dec -> add_node(lookahead);
     if (!match(IDESYM, look_next_token())) {
         error(IDESYM, "const declare", look_next_token() -> get_line());
     }
@@ -676,6 +677,7 @@ void Parser::const_declare (Ast * father) {
 void Parser::var_declare (Ast * father) {
     Ast * var_dec = new Ast("var_declare");
     father -> add_node(var_dec);
+    var_dec -> add_node(lookahead);
     if (!match(IDESYM, look_next_token())) {
         error(IDESYM, "var declare", look_next_token() -> get_line());
     }
@@ -830,6 +832,7 @@ void Parser::write_statement (Ast * father) {
     if (!match(IDESYM, look_next_token())) {
         error(IDESYM, "write statement", look_next_token() -> get_line());
     }
+    write_sta -> add_node(look_next_token());
     get_next_token();
     while (match(COMMASYM, look_next_token())) {
         write_sta -> add_node(look_next_token());

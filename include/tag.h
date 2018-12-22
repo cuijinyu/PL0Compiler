@@ -42,6 +42,7 @@ enum Tag{
     EPS,        // 一不赛龙
     PSTART,     //  语法分析开始Seg
     PEND,        //  语法分析结束Seg
-    PROEND      // 程序结束Seg
+    PROEND,      // 程序结束Seg
+    ANALYSIS,    // 程序分析流程,用于AST生成
 };
 #endif
