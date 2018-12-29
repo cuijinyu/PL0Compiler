@@ -248,6 +248,6 @@ void Laxer::tokenizer () {
                 }
             }
         }
-        // cout << i -> get_lexem() << "  "<<i -> get_tag() << endl;
+        cout << i -> get_lexem() << "  "<<i -> get_tag() << endl;
     }
 }

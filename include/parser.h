@@ -8,7 +8,6 @@
 #include <token.h>
 #include <node.h>
 #include <ast.h>
-#include <Regex>
 using namespace std;
 
 
@@ -178,10 +177,6 @@ class Parser {
         static vector <Tag> Vn;
 
         static set <Tag> block_start;
-};
-
-vector <Production> Parser::productions = {
-
 };
 
 vector <Tag> Parser::Vt = {
